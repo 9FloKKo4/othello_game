@@ -265,13 +265,27 @@ class Bot:
     
     def check_valid_moves(self,othello_board,othello_game):
         possible_moves = []
-        pawns_directions_points= []
+        max_points=0
+        move_points=0
+        
         for element_tile in range(len(othello_board.board)):
-            if othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player) != False:
-                possible_moves.append ([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
-                pawns_directions_points.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
+            legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
+            if legal != False:
+                move_points = 0
+                for count_points in legal:
+                    move_points += count_points[0]
+
+                if max_points == move_points:
+                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
                 
-        return possible_moves[random.randint(0,len(possible_moves)-1)] 
+                elif max_points< move_points:
+                    max_points = move_points
+                    possible_moves = [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]
+                
+                
+                
+                
+        return possible_moves
           
             
     print("Il faut récupérer toutes les cases du tableau")
