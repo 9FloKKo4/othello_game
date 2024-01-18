@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 
 # Object used to create new boards
 
@@ -257,16 +258,80 @@ class Game:
 
 class Bot:
     def __init__(self):
-        self.name = "C3-PO"
+        self.name = "Yoda-sensei"
         
         
 
     # BOT FUNCTIONS
     
+    def create_new_board(self, board_bis): 
+
+        matrice_list =[
+            100, -20, 10,5,5,10,-20,100,
+            -20, -50, -2,-2,-2,10,-50,-20,
+            10, -2, -1,-1,-1,-1,-2,10,
+            5, -2, -1,-1,-1,-1,-2,5,
+            5, -2, -1,-1,-1,-1,-2,5,
+            10, -2, -1,-1,-1,-1,-2,10,
+            -20, -50, -2,-2,-2,10,-50,-20,
+            100, -20, 10,5,5,10,-20,100]
+        for list_index_new in range(len(board_bis.board)):
+                board_bis.board[list_index_new].weight = matrice_list[list_index_new]
+         
+    def check_valid_moves(self,othello_board,othello_game):
+        possible_moves = []
+        max_points=-100
+        move_points=0
+        board_bis=Board(8)
+        board_bis.create_board()
+        self.create_new_board(board_bis)
+           
+           
+        for element_tile in range(len(othello_board.board)):
+            legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
+    
+            if legal != False:
+                move_points = 0
+                for count_points in legal:
+                    move_points += count_points[0]
+                move_points += board_bis.board[element_tile].weight
+
+                if max_points == move_points:
+                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
+                       
+                
+                elif max_points< move_points:
+                    max_points = move_points
+                    possible_moves = [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]]
+                        
+            else:
+                print(element_tile)
+        return random.choice(possible_moves)
+        
+    
+    
+    
+          
+            
+    print("Il faut récupérer toutes les cases du tableau")
+    print("Vérifier quels coups sont jouables")
+    print("Et renvoyer les coordonnées")
+
+    
+    
+    
+class Bot2:
+    def __init__(self):
+        self.name = "C3-PO"
+    
+
+    # BOT FUNCTIONS
+         
     def check_valid_moves(self,othello_board,othello_game):
         possible_moves = []
         max_points=0
         move_points=0
+
         
         for element_tile in range(len(othello_board.board)):
             legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
@@ -274,19 +339,19 @@ class Bot:
                 move_points = 0
                 for count_points in legal:
                     move_points += count_points[0]
+                    
 
                 if max_points == move_points:
                     possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
                 
                 elif max_points< move_points:
                     max_points = move_points
-                    possible_moves = [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]
+                    possible_moves = [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]]
                 
+        
                 
-                
-                
-        return possible_moves
-          
+        return random.choice(possible_moves)
+
             
     print("Il faut récupérer toutes les cases du tableau")
     print("Vérifier quels coups sont jouables")
@@ -304,7 +369,7 @@ othello_board.draw_board("Content")
 
 # Create 2 bots
 myBot = Bot()
-otherBot = Bot()
+otherBot = Bot2()
 
 
 
@@ -318,8 +383,8 @@ while not othello_game.is_game_over:
 
     # Second player / bot logic goes here
     else:
-        move_coordinates = [0, 0]
-        move_coordinates[0] = int(input("Coordonnées en X: "))
-        move_coordinates[1] = int(input("Coordonnées en Y: "))
+        move_coordinates = otherBot.check_valid_moves(othello_board,othello_game)
+        # move_coordinates[0] = int(input("Coordonnées en X: "))
+        # move_coordinates[1] = int(input("Coordonnées en Y: "))
         othello_game.place_pawn(
             move_coordinates[0], move_coordinates[1], othello_board, othello_game.active_player)
