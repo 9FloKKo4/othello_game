@@ -263,7 +263,6 @@ class Bot:
         
 
     # BOT FUNCTIONS
-    
     def create_new_board(self, board_bis): 
 
         matrice_list =[
@@ -281,6 +280,7 @@ class Bot:
     def check_valid_moves(self,othello_board,othello_game):
         possible_moves = []
         corner_spaces = [(0,0),(0,7),(7,0),(7,7)]
+        central_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]
         max_points=-1000
         move_points=0
         board_bis=Board(8)
@@ -288,14 +288,18 @@ class Bot:
         self.create_new_board(board_bis)
            
            
+           
         for element_tile in range(len(othello_board.board)):
             legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
     
             if legal != False:
                 move_points = 0
-                
-               
+                if [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos] in corner_spaces:
+                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
                     
+                for move_in_center in central_moves:
+                    if move_in_center in legal:
+                        possible_moves.append(move_in_center)
                     
                 for count_points in legal:
                     move_points += count_points[0]
@@ -317,6 +321,20 @@ class Bot:
             # return self_moves - opponent_moves
                 
         return random.choice(possible_moves)
+    
+     
+
+        
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     def bot_v2(self,othello_board,othello_game):
         possible_moves = []
@@ -392,4 +410,4 @@ def play_games(number_of_games):
     print("White player won " + str(white_victories) + " times")
         
 
-play_games(20)
+play_games(5)
