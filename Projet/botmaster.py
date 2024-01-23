@@ -1,5 +1,5 @@
 import random
-from copy import deepcopy
+from copy import deepcopy 
 
 # Object used to create new boards
 
@@ -189,7 +189,7 @@ class Game:
             print("Coordinates outside the board")
         else:
             if board_instance.board[(x_pos) + y_pos * 8].content == "🟩":
-                tiles_to_flip = board_instance.is_legal_move(
+                tiles_to_flip = board_instance.is_legal_move(   
                     x_pos, y_pos, color)
                 if not tiles_to_flip:
                     print("Invalid move")
@@ -255,12 +255,39 @@ class Game:
         else:
             print("Égalité !")
 
-
+class OthelloOpening:
+    def __init__(self):
+        self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]  
+    
+    def standard_opening(self):
+        self.opening_moves = [
+            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
+            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
+            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
+            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
+            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]
+                              ]
+        
+    # def tiger_opening(self):
+    #     self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
+    # def damier_opening(self):
+    #     self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
+    # def stair_opening(self):
+    #     self.opening_moves = [(0, 2), (2, 0), (5, 7), (7, 5)]
+    # def double_corner_opening(self):
+    #     self.opening_moves = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        
+    def is_in_opening(self, move_in_center):
+        return move_in_center in self.opening_moves
+    
+     
 class Bot:
     def __init__(self):
         self.name = "C3-PO"
         
-        
+
+
+
 
     # BOT FUNCTIONS
     def create_new_board(self, board_bis): 
@@ -277,6 +304,7 @@ class Bot:
         for list_index_new in range(len(board_bis.board)):
                 board_bis.board[list_index_new].weight = matrice_list[list_index_new]
          
+         
     def check_valid_moves(self,othello_board,othello_game):
         possible_moves = []
         corner_spaces = [(0,0),(0,7),(7,0),(7,7)]
@@ -288,15 +316,17 @@ class Bot:
         self.create_new_board(board_bis)
            
            
-           
         for element_tile in range(len(othello_board.board)):
             legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
     
             if legal != False:
                 move_points = 0
+                
+                # Corner play
                 if [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos] in corner_spaces:
                     possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
                     
+                #  Damiérisation   
                 for move_in_center in central_moves:
                     if move_in_center in legal:
                         possible_moves.append(move_in_center)
@@ -410,4 +440,4 @@ def play_games(number_of_games):
     print("White player won " + str(white_victories) + " times")
         
 
-play_games(5)
+play_games(15)
