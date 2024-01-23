@@ -255,41 +255,75 @@ class Game:
         else:
             print("Égalité !")
 
+
+
 class OthelloOpening:
     def __init__(self):
         self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]  
+        self.opening_white_moves = [[2, 4], [2, 3], [3, 5], [5, 4],[5,3]] 
+        self.opening_black_moves = [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]] 
     
+    # Utile? sachant que l'on souhaite privilégier les strats...à voir
     def standard_opening(self):
         self.opening_moves = [
-            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
-            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
-            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
-            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)],
-            [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]
-                              ]
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]]
+            ]
+    def tiger_opening(self):
+        self.opening_moves = [
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
+            ]
+    def damier_opening(self):
+        self.opening_moves = [
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
+            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
+            ]
+    def stair_opening(self):
+        self.opening_moves = [
+            [[0, 2], [2, 0], [5, 7], [7, 5]],
+            [[0, 2], [2, 0], [5, 7], [7, 5]],
+            [[0, 2], [2, 0], [5, 7], [7, 5]],
+            [[0, 2], [2, 0], [5, 7], [7, 5]],
+            [[0, 2], [2, 0], [5, 7], [7, 5]],
+            ]
         
-    # def tiger_opening(self):
-    #     self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
-    # def damier_opening(self):
-    #     self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4), (4, 4)]
-    # def stair_opening(self):
-    #     self.opening_moves = [(0, 2), (2, 0), (5, 7), (7, 5)]
-    # def double_corner_opening(self):
-    #     self.opening_moves = [(0, 0), (0, 1), (1, 0), (1, 1)]
+    def double_opening(self):
+        self.opening_moves = [
+            [[0, 0], [0, 1], [1, 0], [1, 1]],
+            [[0, 0], [0, 1], [1, 0], [1, 1]],
+            [[0, 0], [0, 1], [1, 0], [1, 1]],
+            [[0, 0], [0, 1], [1, 0], [1, 1]],
+            [[0, 0], [0, 1], [1, 0], [1, 1]],
+            ]
         
+
     def is_in_opening(self, move_in_center):
         return move_in_center in self.opening_moves
     
      
 class Bot:
     def __init__(self):
-        self.name = "C3-PO"
+        self.name = "Yoda_sensei"
         
 
 
-
-
     # BOT FUNCTIONS
+    def check_turn(othelllo_game):
+        turn =(Game.score_black- Game.score_white)-4
+        return turn
+    
+   
+    
     def create_new_board(self, board_bis): 
 
         matrice_list =[
@@ -307,8 +341,8 @@ class Bot:
          
     def check_valid_moves(self,othello_board,othello_game):
         possible_moves = []
-        corner_spaces = [(0,0),(0,7),(7,0),(7,7)]
-        central_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]
+        corner_spaces = [[0, 0], [0, 7], [7, 0], [7, 7]]
+        central_moves = [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]]
         max_points=-1000
         move_points=0
         board_bis=Board(8)
@@ -335,6 +369,11 @@ class Bot:
                     move_points += count_points[0]
                 move_points += board_bis.board[element_tile].weight
 
+                if self.opening_moves < 5:
+                    for count_turn in self.opening_moves[count_turn]:
+                        if count_turn == [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]:
+                            move_points += 50
+                        
                 if max_points == move_points:
                     possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
                        
