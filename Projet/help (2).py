@@ -257,184 +257,197 @@ class Game:
 
 
 
-class OthelloOpening:
-    def __init__(self):
-        self.opening_moves = [(3, 2), (2, 3), (3, 3), (4, 3), (3, 4)]  
-        self.opening_white_moves = [[2, 4], [2, 3], [3, 5], [5, 4],[5,3]] 
-        self.opening_black_moves = [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]] 
-    
-    # Utile? sachant que l'on souhaite privilégier les strats...à voir
-    def standard_opening(self):
-        self.opening_moves = [
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]]
-            ]
-    def tiger_opening(self):
-        self.opening_moves = [
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
-            ]
-    def damier_opening(self):
-        self.opening_moves = [
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
-            ]
-    def stair_opening(self):
-        self.opening_moves = [
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            ]
-        
-    def double_opening(self):
-        self.opening_moves = [
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            ]
-        
 
-    def is_in_opening(self, move_in_center):
-        return move_in_center in self.opening_moves
     
-     
+    class OthelloStrategy:
+        def __init__(self):
+            pass
+
+        def mobility(self, player_moves, opponent_moves):
+            return len(player_moves) - len(opponent_moves)
+
+        def evaporation(self, player_moves, opponent_moves):
+            # Force the opponent to flip many discs
+            return len(opponent_moves) - len(player_moves)
+
+        def is_quiet_move(self, move, othello_board):
+            # Check if a move is a quiet move (does not flip border discs)
+            return all(not othello_board.is_border(x, y) for x, y in move)
+
+        def find_quiet_moves(self, legal_moves, othello_board):
+            # Find quiet moves among the legal moves
+            return [move for move in legal_moves if self.is_quiet_move(move, othello_board)]
+
+        def opening_strategy(self, othello_board, player, opponent):
+            player_moves = othello_board.is_legal_moves(player)
+            opponent_moves = othello_board.is_legal_moves(opponent)
+
+            mobility_score = self.mobility(player_moves, opponent_moves)
+            evaporation_score = self.evaporation(player_moves, opponent_moves)
+
+            if mobility_score > 0:
+                # Maximize mobility
+                return max(player_moves, key=lambda move: len(opponent.get_flips(move[0], move[1])))
+            elif evaporation_score > 0:
+                # Force opponent to flip many discs (evaporation)
+                return max(player_moves, key=lambda move: len(opponent.get_flips(move[0], move[1])))
+            else:
+                # No clear strategy, play a quiet move
+                quiet_moves = self.find_quiet_moves(player_moves, othello_board)
+                return quiet_moves[0] if quiet_moves else player_moves[0]
+    
+    def remove_access(self, move, othello_board, player):
+        # Remove access to a square by flipping necessary discs
+        flips = player.get_flips(move[0], move[1])
+        for flip in flips:
+            othello_board.flip_disc(flip[0], flip[1])
+
+    def opening_inoue(self, othello_board, player, opponent):
+        player_moves = othello_board.is_legal_moves(player)
+        opponent_moves = othello_board.is_legal_moves(opponent)
+
+        quiet_moves = self.find_quiet_moves(player_moves, othello_board)
+
+        if quiet_moves:
+            # Play a quiet move if available
+            return quiet_moves[0]
+        else:
+            # No quiet moves, try to remove opponent's access
+            opponent_quiet_moves = self.find_quiet_moves(opponent_moves, othello_board)
+            if opponent_quiet_moves:
+                # Remove access to opponent's quiet move
+                self.remove_access(opponent_quiet_moves[0], othello_board, player)
+            # Play a random legal move as a fallback
+            return player_moves[0]
+
+
 class Bot:
     def __init__(self):
-        self.name = "Yoda_sensei" 
-        self.opening_white_moves = [[2, 4], [2, 3], [3, 5], [5, 4],[5,3]],
-        
-        
-        self.opening_black_moves = [[2, 3], [3, 2], [5, 4], [4, 5]],
-    
+        self.name = "Yoda_sensei F"
+        self.opening_black_moves = [
+            [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]],
+            [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]],
+            [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]],
+            [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]],
+            [[2, 3], [2, 4], [3, 2], [5, 4], [4, 5]]
+        ] 
 
-    def tiger_opening(self):
-        self.opening_moves = [
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
-            ]
-    def damier_opening(self):
-        self.opening_moves = [
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]],
-            [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4], [4, 4]]
-            ]
-    def stair_opening(self):
-        self.opening_moves = [
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            [[0, 2], [2, 0], [5, 7], [7, 5]],
-            ]
-        
-    def double_opening(self):
-        self.opening_moves = [
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            [[0, 0], [0, 1], [1, 0], [1, 1]],
-            ]
-        
+    def count_discs_difference(self, othello_board):
+        black_discs = 0
+        white_discs = 0
+        for tile in othello_board.board:
+            if tile.color == "black":
+                black_discs += 1
+            elif tile.color == "white":
+                white_discs += 1
+        return black_discs - white_discs
 
-    def is_in_opening(self, move_in_center):
-        return move_in_center in self.opening_moves
+    def center_moves(self, othello_board):
+        center_moves = [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]]
+        legal_moves = []
+        for move in center_moves:
+            if othello_board.is_legal_move(move[0], move[1], self.name):
+                possible_moves.append(move)
+        return possible_moves
+
+    def avoid_frontier_moves(self, othello_board):
+        frontier_moves = []
+        for tile in othello_board.board:
+            if tile.is_frontier():
+                frontier_moves.append([tile.x_pos, tile.y_pos])
+        legal_moves = []
+        for move in frontier_moves:
+            if othello_board.is_legal_move(move[0], move[1], self.name):
+                legal_moves.append(move)
+        return legal_moves
+
+    def group_discs(self, othello_board):
+        # Implementation needed based on board analysis
+        pass
+
+    def avoid_early_edges(self, othello_board, othello_game):
+        turn = (othello_game.score_black + othello_game.score_white) - 4
+        if turn < 25:  # Adjust the turn threshold as needed
+            edge_moves = [[0, 2], [2, 0], [5, 7], [7, 5]]
+            legal_moves = []
+            for move in edge_moves:
+                if othello_board.is_legal_move(move[0], move[1], self.name):
+                    legal_moves.append(move)
+            return legal_moves
+        else:
+            return []
+
 
     # BOT FUNCTIONS
-    def check_turn(self,Game):
-        turn =(Game.score_black + Game.score_white)-4
+    def check_turn(self, Game):
+        turn = (Game.score_black + Game.score_white) - 4
         return turn
-    
-   
-    
-    def create_new_board(self, board_bis): 
 
-        matrice_list =[
-            100, -20, 10,5,5,10,-20,100,
-            -20, -50, -2,-2,-2,10,-50,-20,
-            10, -2, -1,-1,-1,-1,-2,10,
-            5, -2, -1,-1,-1,-1,-2,5,
-            5, -2, -1,-1,-1,-1,-2,5,
-            10, -2, -1,-1,-1,-1,-2,10,
-            -20, -50, -2,-2,-2,10,-50,-20,
-            100, -20, 10,5,5,10,-20,100]
+    def create_new_board(self, board_bis):
+        matrice_list = [
+            100, -20, 10, 5, 5, 10, -20, 100,
+            -20, -50, -2, -2, -2, 10, -50, -20,
+            10, -2, -1, -1, -1, -1, -2, 10,
+            5, -2, -1, -1, -1, -1, -2, 5,
+            5, -2, -1, -1, -1, -1, -2, 5,
+            10, -2, -1, -1, -1, -1, -2, 10,
+            -20, -50, -2, -2, -2, 10, -50, -20,
+            100, -20, 10, 5, 5, 10, -20, 100]
         for list_index_new in range(len(board_bis.board)):
-                board_bis.board[list_index_new].weight = matrice_list[list_index_new]
-         
-         
-    def check_valid_moves(self,othello_board,othello_game):
+            board_bis.board[list_index_new].weight = matrice_list[list_index_new]
+
+    def check_valid_moves(self, othello_board, othello_game):
         possible_moves = []
         corner_spaces = [[0, 0], [0, 7], [7, 0], [7, 7]]
         central_moves = [[3, 2], [2, 3], [3, 3], [4, 3], [3, 4]]
-        max_points=-1000
-        move_points=0
-        board_bis=Board(8)
+        max_points = -1000
+        move_points = 0
+        board_bis = Board(8)
         board_bis.create_board()
         self.create_new_board(board_bis)
-           
-       
+        
+
         for element_tile in range(len(othello_board.board)):
-            legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
-    
+            legal = othello_board.is_legal_move(
+                othello_board.board[element_tile].x_pos, othello_board.board[element_tile].y_pos,
+                othello_game.active_player)
+
             if legal != False:
                 move_points = 0
-                
+
                 # Corner play
                 if [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos] in corner_spaces:
-                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
-                    
-                #  Damiérisation   
+                    possible_moves.append([othello_board.board[element_tile].x_pos, othello_board.board[element_tile].y_pos])
+
+                # Damiérisation
                 for move_in_center in central_moves:
                     if move_in_center in legal:
                         possible_moves.append(move_in_center)
-                    
+
                 for count_points in legal:
                     move_points += count_points[0]
                 move_points += board_bis.board[element_tile].weight
-                
+
                 current_turn = self.check_turn(othello_game)
-                if current_turn< 5:
+                if current_turn < 5:
                     self.opening_black_moves[current_turn]
                     for count_turn in self.opening_black_moves[current_turn]:
                         if count_turn == [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]:
                             move_points += 100
-           
 
-                        
                 if max_points == move_points:
-                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
-                       
-                
-                elif max_points< move_points:
-                    max_points = move_points
-                    possible_moves = [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]]
-                print("In",othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,"Score + weight =", move_points)
-            
-            # def mobility_score(self, othello_board.board):
-            #     self_moves = len(legal(self, othello_board.board))
-            #     opponent_moves = len(legal(self, adversaire(othello_board.board)))
+                    possible_moves.append(
+                        [othello_board.board[element_tile].x_pos, othello_board.board[element_tile].y_pos])
 
-            # return self_moves - opponent_moves
-                
+                elif max_points < move_points:
+                    max_points = move_points
+                    possible_moves = [[othello_board.board[element_tile].x_pos, othello_board.board[element_tile].y_pos]]
+                print("In", othello_board.board[element_tile].x_pos, othello_board.board[element_tile].y_pos,"Score + weight =", move_points)
+
+
         return random.choice(possible_moves)
+
+
     
      
 
@@ -442,29 +455,133 @@ class Bot:
 
     
     
-    def bot_v2(self,othello_board,othello_game):
-        possible_moves = []
-        max_points=0
-        move_points=0
-
+class Botus:
+    def __init__(self):
+        self.name = "YODA-sensei S"
+        self.opening_moves_black =  [
+        [[3, 2], [2, 3], [3, 3], [4, 3]],
+        [[2, 2], [4, 2], [2, 4], [4, 4],[5,3]],
+        [[3, 2], [2, 3], [4, 4], [5, 5], [6, 6]],
+        [[3, 5], [5, 3], [4, 2], [2, 4], [6, 4]],
+        [[2, 5], [5, 2], [4, 5], [5, 4], [3, 2]],
+        ]
         
+        
+        self.opening_moves_white=  [
+        [[3, 3], [4, 3], [3, 4], [4,4]],
+        [[2, 3], [2, 4], [3, 2], [4, 5], [5, 4]],
+        [[3, 3], [4, 3], [4, 4], [5, 3], [5, 4],[4,5]],
+        [[3, 2], [2, 3], [2, 2], [2, 5]],
+        [[6, 3], [3, 6], [6, 5], [5, 6], [6, 6]],
+            ]
+        
+        
+      # BOT FUNCTIONS
+    def check_turn(self,Game):
+        turn= (Game.score_black+Game.score_white)-4
+        return turn
+     
+
+    def check_valid_moves(self,othello_board,othello_game,depth):
+        new_board= Board(8)
+        new_board.create_board()
+        weight_board=[
+            100,-10,10,5,5,10,-10,100,
+            -10,-20,3,3,3,3,-20,-10,
+            10,3,15,2,2,15,3,10,
+            5,3,2,-1,-1,2,3,5,
+            5,3,2,-1,-1,2,3,5,
+            10,3,2,2,2,2,3,10,   
+            -10,-20,3,3,3,3,-20,-10,
+            100,-10,10,5,5,10,-10,100] 
+       
+        for tile in range(len(new_board.board)):
+             new_board.board[tile].weight= weight_board[tile]
+             
+             
+             
+        possible_moves=[]
+        corner_spaces = [(0, 0), (0, 7), (7, 0), (7, 7)]
+        adjacent_spots = [(0, 1), (1, 0),(0, 6), (1, 7),(6, 0), (7, 1),(6, 7), (7, 6)]
+
+        max_points=-10000
+
         for element_tile in range(len(othello_board.board)):
             legal = othello_board.is_legal_move(othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,othello_game.active_player)
-            if legal != False:
-                move_points = 0
-                for count_points in legal:
-                    move_points += count_points[0]
-                    
-
-                if max_points == move_points:
-                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos])
-                
-                elif max_points< move_points:
-                    max_points = move_points
-                    possible_moves = [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]]
-                
         
+            
+            if legal != False:
                 
+                
+                move_points= 0
+                pos_x_y =othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos
+                
+                if pos_x_y in corner_spaces and pos_x_y not in adjacent_spots  :
+                    move_points += 20
+                    possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]) 
+                    
+                     
+                for point in  legal:
+                # Sur chacune des directions, on récupère la liste
+                    move_points += point[0] 
+                move_points += new_board.board[element_tile].weight
+                # On fait la somme pour toutes les directions   
+                current_turn = self.check_turn(othello_game)  
+                
+                
+                if current_turn< 5:
+                    if othello_game.active_player == "⚫":
+                        self.opening_moves_black[current_turn]
+                        for count_turn in   self.opening_moves_black[current_turn]:
+                            if count_turn == [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]:
+                                move_points =+ 100
+                    else :
+                        self.opening_moves_white[current_turn]
+                        for count_turn in   self.opening_moves_white[current_turn]:
+                         if count_turn == [othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos]:
+                            move_points =+ 100
+            
+            
+            
+                
+                
+                             
+                        
+# Calcul des points max ETAPE 2
+                if max_points == move_points:
+                   possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,move_points])
+                elif max_points < move_points:
+                    max_points= move_points
+                    possible_moves= [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,move_points]]
+                print("le score + poids=",move_points)
+              
+            
+            if(depth > 0):
+                depth -= 1
+                for slide in possible_moves:
+                    new_board_plus = deepcopy(othello_board)
+                    new_game = deepcopy(othello_game)
+                    new_game.place_pawn(slide[0], slide[1], new_board_plus, new_game.active_player)
+                    if not othello_game.is_game_over :
+                        opponent_points = self.check_valid_moves(new_board_plus, new_game, depth)
+                        slide[2] -= opponent_points[2]
+                        
+   
+         
+                                
+                         
+                    # max_opps_points=-1000
+                    # move_opps_points = 0
+                    # if max_opps_points == move_opps_points:
+                    #     possible_moves.append([othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,move_opps_points])
+                    # elif max_opps_points < move_opps_points:
+                    #     max_opps_points= move_opps_points
+                    # possible_moves= [[othello_board.board[element_tile].x_pos,othello_board.board[element_tile].y_pos,move_opps_points]]
+               
+                  
+                
+                   
+              
         return random.choice(possible_moves)
         
     print("Il faut récupérer toutes les cases du tableau")
@@ -489,7 +606,7 @@ def play_games(number_of_games):
         othello_board.draw_board("Content")
         # Create 2 bots
         myBot = Bot()
-        otherBot = Bot()
+        otherBot = Botus()
 
         while not othello_game.is_game_over:
             # First player / bot logic goes here
@@ -501,7 +618,7 @@ def play_games(number_of_games):
 
             # Second player / bot logic goes here
             else:
-                move_coordinates = otherBot.bot_v2(othello_board,othello_game) 
+                move_coordinates = otherBot.check_valid_moves(othello_board,othello_game, 1) 
                 othello_game.place_pawn(
                 move_coordinates[0], move_coordinates[1], othello_board, othello_game.active_player)
         
@@ -516,4 +633,4 @@ def play_games(number_of_games):
     print("White player won " + str(white_victories) + " times")
         
 
-play_games(15)
+play_games(1)
